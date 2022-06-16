@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:app_gsheet_api/api-controller/append_row_data.dart';
+import 'package:app_gsheet_api/api-controller/get_row_data.dart';
 import 'package:flutter/material.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -13,7 +17,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   TextEditingController sheetNum = TextEditingController();
   TextEditingController rowNum = TextEditingController();
-  String dropDownValue = 'One';
+  List<String> dropDownValues = ['Get Row Data', 'Append Row Data', 'Login'];
+  String dropDownCurrentValue = '';
+  String data = "No Data";
+
+  @override
+  void initState() {
+    super.initState();
+    dropDownCurrentValue = dropDownValues.first;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +41,25 @@ class _MyHomePageState extends State<MyHomePage> {
               flex: 1,
               child: leftInput(),
             ),
-            const Expanded(
+            Expanded(
               flex: 3,
-              child: Center(
-                child: Text("No Data"),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: ElevatedButton(
+                      onPressed: () async => executeApi(),
+                      child: const Text('Execute'),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 20,
+                    child: Center(
+                      child: Text(data),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -41,14 +68,29 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Future executeApi() async {
+    const encoder = JsonEncoder.withIndent('  ');
+    if (dropDownCurrentValue.compareTo(dropDownValues[0]) == 0) {
+      await getRowData(
+        sheetNum: int.parse(sheetNum.text),
+        rowNum: int.parse(rowNum.text),
+      ).then((val) => data = encoder.convert(val.toJson()));
+    } else if (dropDownCurrentValue.compareTo(dropDownValues[1]) == 0) {
+      await appendRowData(
+              sheetNum: int.parse(sheetNum.text),
+              data: [rowNum.text, 'data', 'tambahan'])
+          .then((val) => data = encoder.convert(val.toJson()));
+    }
+    setState(() {});
+  }
+
   Column leftInput() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
         DropdownButtonFormField(
-            value: dropDownValue,
-            items: <String>['One', 'Two', 'Free', 'Four']
-                .map<DropdownMenuItem<String>>((String value) {
+            value: dropDownCurrentValue,
+            items: dropDownValues.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -56,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }).toList(),
             onChanged: (String? newValue) {
               setState(() {
-                dropDownValue = newValue!;
+                dropDownCurrentValue = newValue!;
               });
             }),
         TextFormField(
