@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
+import 'package:app_gsheet_api/api-controller/login_data.dart';
 import 'package:flutter/material.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -80,6 +81,8 @@ class _MyHomePageState extends State<MyHomePage> {
               sheetNum: int.parse(sheetNum.text),
               data: [rowNum.text, 'data', 'tambahan'])
           .then((val) => data = encoder.convert(val.toJson()));
+    } else if (dropDownCurrentValue.compareTo(dropDownValues[2]) == 0) {
+      await loginData().then((value) => data = encoder.convert(value.toJson()));
     }
     setState(() {});
   }
