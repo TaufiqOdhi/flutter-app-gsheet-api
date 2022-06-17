@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
@@ -19,13 +20,16 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController sheetNum = TextEditingController();
   TextEditingController rowNum = TextEditingController();
   List<String> dropDownValues = ['Get Row Data', 'Append Row Data', 'Login'];
-  String dropDownCurrentValue = '';
+  String dropDownCurrVal = '';
   String data = "No Data";
+  List<Widget> listAppend = [];
+  List<TextEditingController> listAppendController = [];
 
   @override
   void initState() {
     super.initState();
-    dropDownCurrentValue = dropDownValues.first;
+    dropDownCurrVal = dropDownValues.first;
+    addRowDataForm();
   }
 
   @override
@@ -37,10 +41,16 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 1,
-              child: leftInput(),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: listInput(),
+                ),
+              ),
             ),
             Expanded(
               flex: 3,
@@ -71,52 +81,83 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future executeApi() async {
     const encoder = JsonEncoder.withIndent('  ');
-    if (dropDownCurrentValue.compareTo(dropDownValues[0]) == 0) {
+    if (dropDownCurrVal.compareTo(dropDownValues[0]) == 0) {
       await getRowData(
         sheetNum: int.parse(sheetNum.text),
         rowNum: int.parse(rowNum.text),
       ).then((val) => data = encoder.convert(val.toJson()));
-    } else if (dropDownCurrentValue.compareTo(dropDownValues[1]) == 0) {
+    } else if (dropDownCurrVal.compareTo(dropDownValues[1]) == 0) {
       await appendRowData(
               sheetNum: int.parse(sheetNum.text),
               data: [rowNum.text, 'data', 'tambahan'])
           .then((val) => data = encoder.convert(val.toJson()));
-    } else if (dropDownCurrentValue.compareTo(dropDownValues[2]) == 0) {
+    } else if (dropDownCurrVal.compareTo(dropDownValues[2]) == 0) {
       await loginData().then((value) => data = encoder.convert(value.toJson()));
     }
     setState(() {});
   }
 
-  Column leftInput() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: <Widget>[
-        DropdownButtonFormField(
-            value: dropDownCurrentValue,
-            items: dropDownValues.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                dropDownCurrentValue = newValue!;
-              });
-            }),
+  addRowDataForm() {
+    listAppendController.add(TextEditingController());
+    listAppend.add(TextFormField(
+      controller: listAppendController.last,
+      decoration: const InputDecoration(
+        labelText: "Row Data",
+      ),
+    ));
+  }
+
+  List<Widget> listInput() {
+    List<Widget> inputs = [
+      DropdownButtonFormField(
+          value: dropDownCurrVal,
+          items: dropDownValues.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              dropDownCurrVal = newValue!;
+            });
+          }),
+    ];
+    if (dropDownCurrVal.compareTo(dropDownValues[2]) != 0) {
+      inputs.add(
         TextFormField(
           controller: sheetNum,
           decoration: const InputDecoration(
             labelText: "Sheet",
           ),
         ),
+      );
+    }
+
+    if (dropDownCurrVal.compareTo(dropDownValues[0]) == 0) {
+      inputs.add(
         TextFormField(
           controller: rowNum,
           decoration: const InputDecoration(
             labelText: "Row",
           ),
         ),
-      ],
-    );
+      );
+    } else if (dropDownCurrVal.compareTo(dropDownValues[1]) == 0) {
+      for (Widget element in listAppend) {
+        inputs.add(element);
+      }
+      inputs.add(Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: ElevatedButton(
+            onPressed: () {
+              setState(() {
+                addRowDataForm();
+              });
+            },
+            child: const Text("Add More Row Data")),
+      ));
+    }
+    return inputs;
   }
 }
