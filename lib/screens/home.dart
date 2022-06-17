@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
@@ -55,13 +54,31 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               flex: 3,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     flex: 1,
-                    child: ElevatedButton(
-                      onPressed: () async => executeApi(),
-                      child: const Text('Execute'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox(),
+                        Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {},
+                              child: const Text("jSON"),
+                            ),
+                            const SizedBox(),
+                            ElevatedButton(
+                              onPressed: () {},
+                              child: const Text("Table"),
+                            ),
+                          ],
+                        ),
+                        ElevatedButton(
+                          onPressed: () async => executeApi(),
+                          child: const Text('Execute'),
+                        ),
+                      ],
                     ),
                   ),
                   Expanded(
@@ -88,8 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ).then((val) => data = encoder.convert(val.toJson()));
     } else if (dropDownCurrVal.compareTo(dropDownValues[1]) == 0) {
       await appendRowData(
-              sheetNum: int.parse(sheetNum.text),
-              data: [rowNum.text, 'data', 'tambahan'])
+              sheetNum: int.parse(sheetNum.text), data: listAppendController)
           .then((val) => data = encoder.convert(val.toJson()));
     } else if (dropDownCurrVal.compareTo(dropDownValues[2]) == 0) {
       await loginData().then((value) => data = encoder.convert(value.toJson()));
@@ -101,10 +117,16 @@ class _MyHomePageState extends State<MyHomePage> {
     listAppendController.add(TextEditingController());
     listAppend.add(TextFormField(
       controller: listAppendController.last,
-      decoration: const InputDecoration(
-        labelText: "Row Data Column",
+      decoration: InputDecoration(
+        labelText: "Row Data Column ${listAppendController.length}",
       ),
     ));
+  }
+
+  resetRowDataForm() {
+    listAppendController.clear();
+    listAppend.clear();
+    addRowDataForm();
   }
 
   List<Widget> listInput() {
@@ -120,6 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onChanged: (String? newValue) {
             setState(() {
               dropDownCurrVal = newValue!;
+              resetRowDataForm();
             });
           }),
     ];
