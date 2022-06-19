@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:json_table/json_table.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
@@ -95,7 +96,28 @@ class _MyHomePageState extends State<MyHomePage> {
                               color: Theme.of(context).primaryColor,
                               size: 50,
                             )
-                          : Text(data),
+                          : data.compareTo('No Data') == 0
+                              ? Text(data)
+                              : JsonTable(
+                                  jsonDecode('[$data]'),
+                                  allowRowHighlight: true,
+                                  tableHeaderBuilder: (String? header) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0, vertical: 4.0),
+                                      decoration: BoxDecoration(
+                                          border: Border.all(width: 0.5),
+                                          color: Colors.grey[300]),
+                                      child: Text(
+                                        header!,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .displaySmall,
+                                      ),
+                                    );
+                                  },
+                                ),
                     ),
                   ),
                 ],
@@ -143,6 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
             flex: flexForm,
             child: TextFormField(
               controller: listAppendController.last,
+              textAlign: TextAlign.center,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.grey[greyLevel],
@@ -208,6 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 flex: flexForm,
                 child: TextFormField(
                   controller: sheetNum,
+                  textAlign: TextAlign.center,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                   ],
@@ -243,6 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 flex: flexForm,
                 child: TextFormField(
                   controller: rowNum,
+                  textAlign: TextAlign.center,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                   ],
