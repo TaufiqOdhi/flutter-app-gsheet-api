@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
 import 'package:app_gsheet_api/api-controller/login_data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -23,6 +25,10 @@ class _MyHomePageState extends State<MyHomePage> {
   String data = "No Data";
   List<Widget> listAppend = [];
   List<TextEditingController> listAppendController = [];
+  int greyLevel = 300;
+  int flexForm = 3;
+  int flexLabel = 2;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -43,16 +49,16 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 1,
+              flex: 2,
               child: SingleChildScrollView(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: listInput(),
                 ),
               ),
             ),
             Expanded(
-              flex: 3,
+              flex: 5,
               child: Column(
                 children: [
                   Expanded(
@@ -84,7 +90,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     flex: 20,
                     child: Center(
-                      child: Text(data),
+                      child: isLoading
+                          ? LoadingAnimationWidget.discreteCircle(
+                              color: Theme.of(context).primaryColor,
+                              size: 50,
+                            )
+                          : Text(data),
                     ),
                   ),
                 ],
@@ -97,6 +108,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future executeApi() async {
+    setState(() {
+      isLoading = true;
+    });
     const encoder = JsonEncoder.withIndent('  ');
     if (dropDownCurrVal.compareTo(dropDownValues[0]) == 0) {
       await getRowData(
@@ -110,15 +124,36 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (dropDownCurrVal.compareTo(dropDownValues[2]) == 0) {
       await loginData().then((value) => data = encoder.convert(value.toJson()));
     }
-    setState(() {});
+    setState(() {
+      isLoading = false;
+    });
   }
 
   addRowDataForm() {
     listAppendController.add(TextEditingController());
-    listAppend.add(TextFormField(
-      controller: listAppendController.last,
-      decoration: InputDecoration(
-        labelText: "Row Data Column ${listAppendController.length}",
+    listAppend.add(Padding(
+      padding: const EdgeInsets.only(top: 8.0, left: 15),
+      child: Row(
+        children: [
+          Expanded(
+            flex: flexLabel,
+            child: Text("Row Data Col ${listAppendController.length}"),
+          ),
+          Expanded(
+            flex: flexForm,
+            child: TextFormField(
+              controller: listAppendController.last,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey[greyLevel],
+                border: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     ));
   }
@@ -131,27 +166,63 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Widget> listInput() {
     List<Widget> inputs = [
-      DropdownButtonFormField(
-          value: dropDownCurrVal,
-          items: dropDownValues.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            setState(() {
-              dropDownCurrVal = newValue!;
-              resetRowDataForm();
-            });
-          }),
+      Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: DropdownButtonFormField(
+            value: dropDownCurrVal,
+            decoration: InputDecoration(
+              fillColor: Colors.grey[greyLevel],
+              filled: true,
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            items: dropDownValues.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                dropDownCurrVal = newValue!;
+                sheetNum.text = ''; //untuk clear form
+                rowNum.text = ''; //untuk clear form
+                resetRowDataForm();
+              });
+            }),
+      ),
     ];
     if (dropDownCurrVal.compareTo(dropDownValues[2]) != 0) {
       inputs.add(
-        TextFormField(
-          controller: sheetNum,
-          decoration: const InputDecoration(
-            labelText: "Sheet",
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, left: 15),
+          child: Row(
+            children: [
+              Expanded(
+                flex: flexLabel,
+                child: const Text('Sheet'),
+              ),
+              Expanded(
+                flex: flexForm,
+                child: TextFormField(
+                  controller: sheetNum,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                  ],
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey[greyLevel],
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -159,10 +230,34 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (dropDownCurrVal.compareTo(dropDownValues[0]) == 0) {
       inputs.add(
-        TextFormField(
-          controller: rowNum,
-          decoration: const InputDecoration(
-            labelText: "Row",
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, left: 15),
+          child: Row(
+            children: [
+              Expanded(
+                  flex: flexLabel,
+                  child: const Text(
+                    "Row",
+                  )),
+              Expanded(
+                flex: flexForm,
+                child: TextFormField(
+                  controller: rowNum,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                  ],
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    fillColor: Colors.grey[greyLevel],
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -173,12 +268,20 @@ class _MyHomePageState extends State<MyHomePage> {
       inputs.add(Padding(
         padding: const EdgeInsets.only(top: 10),
         child: ElevatedButton(
-            onPressed: () {
-              setState(() {
-                addRowDataForm();
-              });
-            },
-            child: const Text("Add More Row Data")),
+          style: ButtonStyle(
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+          ),
+          onPressed: () {
+            setState(() {
+              addRowDataForm();
+            });
+          },
+          child: const Text("Add More Row Data"),
+        ),
       ));
     }
     return inputs;
