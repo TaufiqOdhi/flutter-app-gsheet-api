@@ -23,13 +23,14 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController rowNum = TextEditingController();
   List<String> dropDownValues = ['Get Row Data', 'Append Row Data', 'Login'];
   String dropDownCurrVal = '';
-  String data = "No Data";
+  List<dynamic> data = ["No Data"];
   List<Widget> listAppend = [];
   List<TextEditingController> listAppendController = [];
   int greyLevel = 300;
   int flexForm = 3;
   int flexLabel = 2;
   bool isLoading = false;
+  String resultMenu = 'Table';
 
   @override
   void initState() {
@@ -90,34 +91,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   Expanded(
                     flex: 20,
-                    child: Center(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
                       child: isLoading
-                          ? LoadingAnimationWidget.discreteCircle(
-                              color: Theme.of(context).primaryColor,
-                              size: 50,
+                          ? Center(
+                              child: LoadingAnimationWidget.discreteCircle(
+                                color: Theme.of(context).primaryColor,
+                                size: 50,
+                              ),
                             )
-                          : data.compareTo('No Data') == 0
-                              ? Text(data)
-                              : JsonTable(
-                                  jsonDecode('[$data]'),
-                                  allowRowHighlight: true,
-                                  tableHeaderBuilder: (String? header) {
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0, vertical: 4.0),
-                                      decoration: BoxDecoration(
-                                          border: Border.all(width: 0.5),
-                                          color: Colors.grey[300]),
-                                      child: Text(
-                                        header!,
-                                        textAlign: TextAlign.center,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .displaySmall,
-                                      ),
-                                    );
-                                  },
-                                ),
+                          : data[0].toString().compareTo('No Data') == 0
+                              ? Center(child: Text(data[0]))
+                              : JsonTable(data),
                     ),
                   ),
                 ],
@@ -133,18 +118,19 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       isLoading = true;
     });
-    const encoder = JsonEncoder.withIndent('  ');
+    // const encoder = JsonEncoder.withIndent('  ');
+    //                   encoder.convert(val.toJson());
     if (dropDownCurrVal.compareTo(dropDownValues[0]) == 0) {
       await getRowData(
         sheetNum: int.parse(sheetNum.text),
         rowNum: int.parse(rowNum.text),
-      ).then((val) => data = encoder.convert(val.toJson()));
+      ).then((val) => data = [val.toJson()]);
     } else if (dropDownCurrVal.compareTo(dropDownValues[1]) == 0) {
       await appendRowData(
               sheetNum: int.parse(sheetNum.text), data: listAppendController)
-          .then((val) => data = encoder.convert(val.toJson()));
+          .then((val) => data = [val.toJson()]);
     } else if (dropDownCurrVal.compareTo(dropDownValues[2]) == 0) {
-      await loginData().then((value) => data = encoder.convert(value.toJson()));
+      await loginData().then((val) => data = [val.toJson()]);
     }
     setState(() {
       isLoading = false;
