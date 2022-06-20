@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:json_table/json_table.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
@@ -23,20 +22,24 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController rowNum = TextEditingController();
   List<String> dropDownValues = ['Get Row Data', 'Append Row Data', 'Login'];
   String dropDownCurrVal = '';
-  List<dynamic> data = ["No Data"];
+  List<Map<String, dynamic>> data = [
+    {"data": "No Data"}
+  ];
   List<Widget> listAppend = [];
   List<TextEditingController> listAppendController = [];
   int greyLevel = 300;
   int flexForm = 3;
   int flexLabel = 2;
   bool isLoading = false;
-  String resultMenu = 'Table';
+  List<String> listResultMenu = ['jSON', 'Table'];
+  String resultMenu = '';
 
   @override
   void initState() {
     super.initState();
     dropDownCurrVal = dropDownValues.first;
     addRowDataForm();
+    resultMenu = listResultMenu[0];
   }
 
   @override
@@ -52,10 +55,13 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Expanded(
               flex: 2,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: listInput(),
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: listInput(),
+                  ),
                 ),
               ),
             ),
@@ -72,13 +78,21 @@ class _MyHomePageState extends State<MyHomePage> {
                         Row(
                           children: [
                             ElevatedButton(
-                              onPressed: () {},
-                              child: const Text("jSON"),
+                              onPressed: () {
+                                setState(() {
+                                  resultMenu = listResultMenu[0];
+                                });
+                              },
+                              child: Text(listResultMenu[0]),
                             ),
                             const SizedBox(),
                             ElevatedButton(
-                              onPressed: () {},
-                              child: const Text("Table"),
+                              onPressed: () {
+                                setState(() {
+                                  resultMenu = listResultMenu[1];
+                                });
+                              },
+                              child: Text(listResultMenu[1]),
                             ),
                           ],
                         ),
@@ -91,19 +105,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   Expanded(
                     flex: 20,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: isLoading
-                          ? Center(
-                              child: LoadingAnimationWidget.discreteCircle(
-                                color: Theme.of(context).primaryColor,
-                                size: 50,
-                              ),
-                            )
-                          : data[0].toString().compareTo('No Data') == 0
-                              ? Center(child: Text(data[0]))
-                              : JsonTable(data),
-                    ),
+                    child: isLoading
+                        ? Center(
+                            child: LoadingAnimationWidget.discreteCircle(
+                              color: Theme.of(context).primaryColor,
+                              size: 50,
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: resultWidget(),
+                          ),
                   ),
                 ],
               ),
@@ -114,12 +126,49 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget resultWidget() {
+    const encoder = JsonEncoder.withIndent('  ');
+    if (data[0]['data'].toString().compareTo('No Data') == 0) {
+      return Center(child: Text(data[0]['data']));
+    } else if (resultMenu.compareTo(listResultMenu[0]) == 0) {
+      return Center(
+        child: Text(encoder.convert(data[0])),
+      );
+    } else {
+      return Scrollbar(
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            // dataRowHeight:  ,
+            headingRowColor: MaterialStateColor.resolveWith(
+              (states) => Theme.of(context).primaryColorDark,
+            ),
+            headingTextStyle: TextStyle(
+              backgroundColor: Theme.of(context).primaryColorDark,
+            ),
+            columns: data[0].keys.map<DataColumn>((e) {
+              return DataColumn(label: Center(child: Text(e)));
+            }).toList(),
+            rows: data.map<DataRow>((e) {
+              List<DataCell> dataCell = [];
+              e.forEach((key, value) {
+                dataCell.add(DataCell(
+                  Text(encoder.convert(value)),
+                ));
+              });
+              return DataRow(cells: dataCell);
+            }).toList(),
+          ),
+        ),
+      );
+    }
+  }
+
   Future executeApi() async {
     setState(() {
       isLoading = true;
     });
-    // const encoder = JsonEncoder.withIndent('  ');
-    //                   encoder.convert(val.toJson());
     if (dropDownCurrVal.compareTo(dropDownValues[0]) == 0) {
       await getRowData(
         sheetNum: int.parse(sheetNum.text),
