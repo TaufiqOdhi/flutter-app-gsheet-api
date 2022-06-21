@@ -135,8 +135,26 @@ class _MyHomePageState extends State<MyHomePage> {
     if (data[0]['data'].toString().compareTo('No Data') == 0) {
       return Center(child: Text(data[0]['data']));
     } else if (resultMenu.compareTo(listResultMenu[0]) == 0) {
-      return Center(
-        child: Text(encoder.convert(data[0])),
+      return Scrollbar(
+        controller: verticalScroll,
+        thumbVisibility: true,
+        child: AdaptiveScrollbar(
+          sliderActiveColor: Theme.of(context).primaryColor,
+          sliderDefaultColor: Theme.of(context).primaryColorDark,
+          controller: horizontalScroll,
+          position: ScrollbarPosition.bottom,
+          child: SingleChildScrollView(
+            controller: verticalScroll,
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              controller: horizontalScroll,
+              scrollDirection: Axis.horizontal,
+              child: Center(
+                child: Text(encoder.convert(data[0])),
+              ),
+            ),
+          ),
+        ),
       );
     } else {
       return AdaptiveScrollbar(
@@ -203,6 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     setState(() {
       isLoading = false;
+      resultMenu = listResultMenu[1];
     });
   }
 
