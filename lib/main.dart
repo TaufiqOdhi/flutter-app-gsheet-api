@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Google Sheet Demo Home Page'),
+      home: const MyHomePage(title: 'Google Sheet Demo App'),
     );
   }
 }

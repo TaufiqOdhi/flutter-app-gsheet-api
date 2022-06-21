@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:adaptive_scrollbar/adaptive_scrollbar.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:app_gsheet_api/api-controller/append_row_data.dart';
 import 'package:app_gsheet_api/api-controller/get_row_data.dart';
@@ -20,6 +21,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   TextEditingController sheetNum = TextEditingController();
   TextEditingController rowNum = TextEditingController();
+  ScrollController verticalScroll = ScrollController();
+  ScrollController horizontalScroll = ScrollController();
   List<String> dropDownValues = ['Get Row Data', 'Append Row Data', 'Login'];
   String dropDownCurrVal = '';
   List<Map<String, dynamic>> data = [
@@ -39,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     dropDownCurrVal = dropDownValues.first;
     addRowDataForm();
-    resultMenu = listResultMenu[0];
+    resultMenu = listResultMenu[1];
   }
 
   @override
@@ -113,7 +116,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           )
                         : Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding:
+                                const EdgeInsets.fromLTRB(8.0, 9.0, 8.0, 20.0),
                             child: resultWidget(),
                           ),
                   ),
@@ -135,30 +139,46 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Text(encoder.convert(data[0])),
       );
     } else {
-      return Scrollbar(
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            // dataRowHeight:  ,
-            headingRowColor: MaterialStateColor.resolveWith(
-              (states) => Theme.of(context).primaryColorDark,
+      return AdaptiveScrollbar(
+        sliderActiveColor: Theme.of(context).primaryColor,
+        sliderDefaultColor: Theme.of(context).primaryColorDark,
+        controller: verticalScroll,
+        child: AdaptiveScrollbar(
+          sliderActiveColor: Theme.of(context).primaryColor,
+          sliderDefaultColor: Theme.of(context).primaryColorDark,
+          controller: horizontalScroll,
+          position: ScrollbarPosition.bottom,
+          child: SingleChildScrollView(
+            controller: verticalScroll,
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              controller: horizontalScroll,
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                dataRowHeight: 300,
+                headingRowColor: MaterialStateColor.resolveWith(
+                  (states) => Theme.of(context).primaryColorDark,
+                ),
+                headingTextStyle: const TextStyle(
+                  color: Colors.white,
+                ),
+                columns: data[0].keys.map<DataColumn>((e) {
+                  return DataColumn(label: Center(child: Text(e)));
+                }).toList(),
+                rows: data.map<DataRow>((e) {
+                  List<DataCell> dataCell = [];
+                  e.forEach((key, value) {
+                    dataCell.add(DataCell(
+                      FittedBox(
+                        fit: BoxFit.contain,
+                        child: Text(encoder.convert(value)),
+                      ),
+                    ));
+                  });
+                  return DataRow(cells: dataCell);
+                }).toList(),
+              ),
             ),
-            headingTextStyle: TextStyle(
-              backgroundColor: Theme.of(context).primaryColorDark,
-            ),
-            columns: data[0].keys.map<DataColumn>((e) {
-              return DataColumn(label: Center(child: Text(e)));
-            }).toList(),
-            rows: data.map<DataRow>((e) {
-              List<DataCell> dataCell = [];
-              e.forEach((key, value) {
-                dataCell.add(DataCell(
-                  Text(encoder.convert(value)),
-                ));
-              });
-              return DataRow(cells: dataCell);
-            }).toList(),
           ),
         ),
       );
